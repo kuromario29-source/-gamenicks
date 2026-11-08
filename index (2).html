@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeNick — Генератор никнеймов</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        :root { --bg-main: #0b0f17; --bg-card: #131b26; --bg-input: #1c2635; --text-main: #f3f4f6; --text-muted: #9ca3af; --primary: #8b5cf6; --primary-glow: rgba(139, 92, 246, 0.3); --secondary: #00f2fe; --border: rgba(255, 255, 255, 0.08); --radius-md: 12px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .ad-container { width: 100%; max-width: 600px; margin: 15px 0; padding: 15px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); text-align: center; color: var(--text-muted); font-size: 12px; }
+        header { text-align: center; margin-bottom: 25px; }
+        header h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, #fff 30%, var(--secondary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header p { color: var(--text-muted); font-size: 0.95rem; }
+        .generator-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; width: 100%; max-width: 600px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        .control-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        select { width: 100%; background-color: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: var(--radius-md); font-size: 14px; outline: none; cursor: pointer; color-scheme: dark; }
+        .btn-generate { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%); color: white; border: none; padding: 15px; font-size: 15px; font-weight: 700; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px var(--primary-glow); }
+        .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5); }
+        .results-box { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 25px; }
+        .results-box h3 { font-size: 14px; color: var(--text-muted); margin-bottom: 15px; }
+        .nick-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 480px) { .nick-list { grid-template-columns: 1fr; } }
+        .nick-item { background-color: var(--bg-input); border: 1px solid var(--border); padding: 12px 15px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 15px; }
+        .btn-copy { background: transparent; border: none; color: var(--primary); cursor: pointer; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; }
+        .btn-copy:hover { color: var(--secondary); }
+        .btn-copy.copied { color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <div class="ad-container" id="yandex_rtb_top">Блок рекламы РСЯ появится здесь после модерации</div>
+
+    <header>
+        <h1>ForgeNick</h1>
+        <p>Генератор премиум-никнеймов для игр</p>
+    </header>
+
+    <div class="generator-card">
+        <div class="settings-grid">
+            <div class="control-group">
+                <label>Стиль</label>
+                <select id="style-select">
+                    <option value="cyberpunk">Киберпанк</option>
+                    <option value="fantasy">Фэнтези</option>
+                    <option value="brutal">Шутеры / Brutal</option>
+                    <option value="anime">Аниме</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Длина</label>
+                <select id="length-select">
+                    <option value="any">Любая</option>
+                    <option value="short">Короткие</option>
+                    <option value="long">Длинные</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Оформление</label>
+                <select id="deco-select">
+                    <option value="none">Чистый текст</option>
+                    <option value="brackets">[ Символы ]</option>
+                    <option value="dots">Точки</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateNicknames()">Сгенерировать варианты</button>
+
+        <div class="results-box" id="results-section" style="display: none;">
+            <h3>Нажмите, чтобы скопировать:</h3>
+            <div class="nick-list" id="nick-list-container"></div>
+        </div>
+    </div>
+
+    <div class="ad-container" id="yandex_rtb_bottom">Блок рекламы РСЯ появится здесь после модерации</div>
+
+    <script>
+        const database = {
+            cyberpunk: {
+                roots: ['Viper', 'Phantom', 'Neo', 'Matrix', 'Flux', 'Glitch', 'Proxy', 'Cyber', 'Byte', 'Synth', 'Net', 'Pulse', 'Vertex', 'Laser', 'Static'],
+                affixes: ['Core', 'Ghost', 'Zero', 'Link', 'Node', 'Grid', 'Daemon', 'Shift', 'Echo', 'Vector', 'Pixel', 'Shell', 'Code']
+            },
+            fantasy: {
+                roots: ['Aero', 'Mage', 'Rune', 'Eldric', 'Myth', 'Saga', 'Thorn', 'Frost', 'Storm', 'Shadow', 'Void', 'Drake', 'Lumen', 'Chronos', 'Astra'],
+                affixes: ['Gale', 'Weaver', 'Shard', 'Fang', 'Vale', 'Soul', 'Born', 'Bane', 'Crest', 'Glen', 'Bound', 'Forge']
+            },
+            brutal: {
+                roots: ['Apex', 'Bullet', 'Crash', 'Doom', 'Grip', 'Krieg', 'Rage', 'Rox', 'Tank', 'Vandal', 'Wolf', 'Zeal', 'Tox', 'Titan', 'Iron'],
+                affixes: ['Shot', 'Jack', 'Jaw', 'Hound', 'Slayer', 'Gore', 'Bite', 'Fist', 'Razor', 'Hammer', 'Trigger']
+            },
+            anime: {
+                roots: ['Sora', 'Kage', 'Yuki', 'Rin', 'Zeni', 'Taka', 'Kami', 'Shin', 'Akira', 'Yami', 'Ren', 'Haru', 'Sama', 'Chrono', 'Kira'],
+                affixes: ['Kun', 'Chan', 'Tsuki', 'Gami', 'Kaze', 'Ryu', 'Orochi', 'Senshi', 'Kitsune', 'Neko']
+            }
+        };
+
+        function generateNicknames() {
+            const style = document.getElementById('style-select').value;
+            const lengthOpt = document.getElementById('length-select').value;
+            const deco = document.getElementById('deco-select').value;
+            const pool = database[style];
+            let generated = [];
+
+            for (let i = 0; i < 50; i++) {
+                if (generated.length >= 6) break;
+                let root = pool.roots[Math.floor(Math.random() * pool.roots.length)];
+                let affix = pool.affixes[Math.floor(Math.random() * pool.affixes.length)];
+                let nickname = root + affix;
+
+                if (lengthOpt === 'short' && nickname.length > 6) continue;
+                if (lengthOpt === 'long' && nickname.length <= 6) continue;
+
+                if (deco === 'brackets') { nickname = `[${nickname}]`; }
+                else if (deco === 'dots') { nickname = nickname.toLowerCase(); let mid = Math.floor(nickname.length / 2); nickname = nickname.slice(0, mid) + '.' + nickname.slice(mid); }
+
+                if (!generated.includes(nickname)) { generated.push(nickname); }
+            }
+
+            while (generated.length < 6) {
+                let r = pool.roots[Math.floor(Math.random() * pool.roots.length)];
+                if (!generated.includes(r)) generated.push(r);
+            }
+
+            const container = document.getElementById('nick-list-container');
+            container.innerHTML = '';
+            generated.forEach(nick => {
+                const div = document.createElement('div');
+                div.className = 'nick-item';
+                div.innerHTML = `<span>${nick}</span><button class="btn-copy" onclick="copyToClipboard('${nick}', this)">Копировать</button>`;
+                container.appendChild(div);
+            });
+            document.getElementById('results-section').style.display = 'block';
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = 'Готово!';
+                button.classList.add('copied');
+                setTimeout(() => { button.textContent = 'Копировать'; button.classList.remove('copied'); }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>
